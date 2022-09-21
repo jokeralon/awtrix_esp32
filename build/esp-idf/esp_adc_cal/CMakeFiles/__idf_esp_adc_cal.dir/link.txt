@@ -1,0 +1,2 @@
+/home/alon/.espressif/tools/riscv32-esp-elf/esp-2021r2-patch4-8.4.0/riscv32-esp-elf/bin/riscv32-esp-elf-ar qc libesp_adc_cal.a CMakeFiles/__idf_esp_adc_cal.dir/esp_adc_cal_common.c.obj CMakeFiles/__idf_esp_adc_cal.dir/esp32c3/esp_adc_cal.c.obj
+/home/alon/.espressif/tools/riscv32-esp-elf/esp-2021r2-patch4-8.4.0/riscv32-esp-elf/bin/riscv32-esp-elf-ranlib libesp_adc_cal.a

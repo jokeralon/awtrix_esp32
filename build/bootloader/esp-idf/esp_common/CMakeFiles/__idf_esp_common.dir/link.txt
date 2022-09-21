@@ -1,0 +1,2 @@
+/home/alon/.espressif/tools/riscv32-esp-elf/esp-2021r2-patch4-8.4.0/riscv32-esp-elf/bin/riscv32-esp-elf-ar qc libesp_common.a CMakeFiles/__idf_esp_common.dir/src/esp_err_to_name.c.obj
+/home/alon/.espressif/tools/riscv32-esp-elf/esp-2021r2-patch4-8.4.0/riscv32-esp-elf/bin/riscv32-esp-elf-ranlib libesp_common.a

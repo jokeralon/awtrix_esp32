@@ -1,0 +1,2 @@
+/home/alon/.espressif/tools/riscv32-esp-elf/esp-2021r2-patch4-8.4.0/riscv32-esp-elf/bin/riscv32-esp-elf-ar qc libtcpip_adapter.a CMakeFiles/__idf_tcpip_adapter.dir/tcpip_adapter_compat.c.obj
+/home/alon/.espressif/tools/riscv32-esp-elf/esp-2021r2-patch4-8.4.0/riscv32-esp-elf/bin/riscv32-esp-elf-ranlib libtcpip_adapter.a

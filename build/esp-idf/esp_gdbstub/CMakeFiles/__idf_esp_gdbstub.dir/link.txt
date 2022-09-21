@@ -1,0 +1,2 @@
+/home/alon/.espressif/tools/riscv32-esp-elf/esp-2021r2-patch4-8.4.0/riscv32-esp-elf/bin/riscv32-esp-elf-ar qc libesp_gdbstub.a CMakeFiles/__idf_esp_gdbstub.dir/src/gdbstub.c.obj CMakeFiles/__idf_esp_gdbstub.dir/src/packet.c.obj CMakeFiles/__idf_esp_gdbstub.dir/riscv/gdbstub_riscv.c.obj CMakeFiles/__idf_esp_gdbstub.dir/esp32c3/gdbstub_esp32c3.c.obj
+/home/alon/.espressif/tools/riscv32-esp-elf/esp-2021r2-patch4-8.4.0/riscv32-esp-elf/bin/riscv32-esp-elf-ranlib libesp_gdbstub.a

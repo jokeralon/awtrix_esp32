@@ -1,0 +1,21 @@
+{
+    "project_name":       "bootloader",
+    "project_path":       "/home/alon/github/awtrix/esp-idf/components/bootloader/subproject",
+    "build_dir":          "/home/alon/github/awtrix/build/bootloader",
+    "config_file":        "/home/alon/github/awtrix/sdkconfig",
+    "config_defaults":    "",
+    "app_elf":            "bootloader.elf",
+    "app_bin":            "bootloader.bin",
+    "git_revision":       "v4.4.2-283-g2f929685fc",
+    "target":             "esp32c3",
+    "rev":                "",
+    "phy_data_partition": "",
+    "monitor_baud" :      "115200",
+    "monitor_toolprefix": "riscv32-esp-elf-",
+    "config_environment" : {
+        "COMPONENT_KCONFIGS" : "/home/alon/github/awtrix/esp-idf/components/efuse/Kconfig;/home/alon/github/awtrix/esp-idf/components/esp32c3/Kconfig;/home/alon/github/awtrix/esp-idf/components/esp_common/Kconfig;/home/alon/github/awtrix/esp-idf/components/esp_hw_support/Kconfig;/home/alon/github/awtrix/esp-idf/components/esp_system/Kconfig;/home/alon/github/awtrix/esp-idf/components/freertos/Kconfig;/home/alon/github/awtrix/esp-idf/components/hal/Kconfig;/home/alon/github/awtrix/esp-idf/components/log/Kconfig;/home/alon/github/awtrix/esp-idf/components/newlib/Kconfig;/home/alon/github/awtrix/esp-idf/components/spi_flash/Kconfig",
+        "COMPONENT_KCONFIGS_PROJBUILD" : "/home/alon/github/awtrix/esp-idf/components/bootloader/Kconfig.projbuild;/home/alon/github/awtrix/esp-idf/components/esp_rom/Kconfig.projbuild;/home/alon/github/awtrix/esp-idf/components/esptool_py/Kconfig.projbuild;/home/alon/github/awtrix/esp-idf/components/partition_table/Kconfig.projbuild"
+    },
+    "build_components" : [ "bootloader", "bootloader_support", "efuse", "esp32c3", "esp_common", "esp_hw_support", "esp_rom", "esp_system", "esptool_py", "freertos", "hal", "log", "main", "micro-ecc", "newlib", "partition_table", "riscv", "soc", "spi_flash", "" ],
+    "build_component_paths" : [ "/home/alon/github/awtrix/esp-idf/components/bootloader", "/home/alon/github/awtrix/esp-idf/components/bootloader_support", "/home/alon/github/awtrix/esp-idf/components/efuse", "/home/alon/github/awtrix/esp-idf/components/esp32c3", "/home/alon/github/awtrix/esp-idf/components/esp_common", "/home/alon/github/awtrix/esp-idf/components/esp_hw_support", "/home/alon/github/awtrix/esp-idf/components/esp_rom", "/home/alon/github/awtrix/esp-idf/components/esp_system", "/home/alon/github/awtrix/esp-idf/components/esptool_py", "/home/alon/github/awtrix/esp-idf/components/freertos", "/home/alon/github/awtrix/esp-idf/components/hal", "/home/alon/github/awtrix/esp-idf/components/log", "/home/alon/github/awtrix/esp-idf/components/bootloader/subproject/main", "/home/alon/github/awtrix/esp-idf/components/bootloader/subproject/components/micro-ecc", "/home/alon/github/awtrix/esp-idf/components/newlib", "/home/alon/github/awtrix/esp-idf/components/partition_table", "/home/alon/github/awtrix/esp-idf/components/riscv", "/home/alon/github/awtrix/esp-idf/components/soc", "/home/alon/github/awtrix/esp-idf/components/spi_flash", "" ]
+}

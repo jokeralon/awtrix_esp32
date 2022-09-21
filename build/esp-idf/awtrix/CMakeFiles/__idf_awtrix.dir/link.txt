@@ -1,0 +1,2 @@
+/home/alon/.espressif/tools/riscv32-esp-elf/esp-2021r2-patch4-8.4.0/riscv32-esp-elf/bin/riscv32-esp-elf-ar qc libawtrix.a CMakeFiles/__idf_awtrix.dir/awtrix.c.obj CMakeFiles/__idf_awtrix.dir/awtrix_clock.c.obj
+/home/alon/.espressif/tools/riscv32-esp-elf/esp-2021r2-patch4-8.4.0/riscv32-esp-elf/bin/riscv32-esp-elf-ranlib libawtrix.a
