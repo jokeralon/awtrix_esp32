@@ -1,0 +1,10 @@
+idf_component_register(SRCS "ws2812/ws2812.c"
+                            "wifi/wifi.c"
+                            "fonts/fonts.c"
+                            "fonts/shape.c"
+                    INCLUDE_DIRS "ws2812/include"
+                                 "wifi/include"
+                                 "fonts/include"
+                    PRIV_REQUIRES "driver"
+                    PRIV_REQUIRES "drivers"
+                    )

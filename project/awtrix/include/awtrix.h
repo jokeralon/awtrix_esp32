@@ -19,7 +19,29 @@ extern "C" {
 
 #include "esp_err.h"
 
+#define NUMBER_FONT_START_X (2) // 字体偏移，左上角为原点
+#define NUMBER_FONT_START_Y (1)
+#define NUMBER_FONT_COL (5) // 数字字体行数
+#define NUMBER_FONT_RAW (3) // 数字字体列数
+#define AWTRIX_MAX_RAW (8) // 屏幕像素点行数
+#define AWTRIX_MAX_COL (32)  // 屏幕像素点列数
 
+#define AWTRIX_DISPLAY_CLOCK_HOURS_12   1   // 12小时制
+
+enum
+{   
+    AWTRIX_DISPLAY_TYPE_CLOCK = 0,
+    AWTRIX_DISPLAY_TYPE_WEATHER,
+};
+
+typedef union{
+    struct{
+        uint8_t b;
+        uint8_t g;
+        uint8_t r;
+    };
+    uint32_t rgb;
+}pixel_u;
 
 void init_led();
 
@@ -27,8 +49,18 @@ void set_rgb(int led_num, uint16_t Red, uint16_t Green, uint16_t Blue);
 
 int awtrix_init(void);
 
+void awtrix_map_pixel_init();
 
-uint8_t *awtrix_map_add_number(int number, int position);
+pixel_u *awrtix_map_get_pixel(void);
+
+int awtrix_map_set_clock(int hours, int minutes, int seconds);
+
+int awtrix_map_wifi_init();
+
+int awtrix_map_display_clear();
+
+
+int awtrix_effect_scroll(pixel_u *pixel);
 
 #ifdef __cplusplus
 }

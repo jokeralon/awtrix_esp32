@@ -23,6 +23,8 @@ void app_main(void)
 	}
 	ESP_ERROR_CHECK(ret);
 
+	ESP_LOGI(TAG, "awtrix start...");
+
 	awtrix_init();
 
 }
