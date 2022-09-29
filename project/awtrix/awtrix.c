@@ -15,6 +15,11 @@
 
 static const char *TAG = "awtrix";
 
+#define EXAMPLE_ESP_WIFI_SSID "pppppp"
+#define EXAMPLE_ESP_WIFI_PASS "11223344"
+// #define EXAMPLE_ESP_WIFI_SSID "ChinaNet-BVBi"
+// #define EXAMPLE_ESP_WIFI_PASS "e6s7tmuq"
+
 #define RMT_TX_NUM 8				 //发送口
 #define RMT_TX_CHANNEL RMT_CHANNEL_0 //发送频道
 #define LED_STRIP_NUM 257			 //灯珠数量
@@ -26,8 +31,8 @@ int awtrix_status_flag = 0;
 TaskHandle_t awtrix_display_handle = NULL;
 TaskHandle_t awtrix_status_handle = NULL;
 
-	time_t now;
-	struct tm timeinfo;
+time_t now;
+struct tm timeinfo;
 pixel_u *pixel = NULL;
 
 void init_led()
@@ -71,6 +76,26 @@ void awtrix_display(void *pvParameters) //任务函数
 		uint8_t flag = 0;
 		int num = 0;
 
+		printf("\n");
+
+		for (int i = 0; i < 8; i++)
+		{
+			for (int j = 0; j < 32; j++)
+			{
+				if (pixel[(i * 32) + j].rgb > 0)
+				{
+					strip->set_pixel(strip, num, pixel[(j * 32) + i].r, pixel[(j * 32) + i].g, pixel[(j * 32) + i].b);
+					printf("* ");
+				}
+				else
+				{
+					strip->set_pixel(strip, num, 0, 0, 0);
+					printf("  ");
+				}
+			}
+			printf("\n");
+		}
+
 		for (int i = 0; i < 32; i++)
 		{
 			for (int j = 0; j < 8; j++)
@@ -102,7 +127,7 @@ void awtrix_display(void *pvParameters) //任务函数
 			flag = ~flag;
 		}
 		strip->refresh(strip, num);
-		vTaskDelay(pdMS_TO_TICKS(16));
+		vTaskDelay(pdMS_TO_TICKS(500));
 	}
 	vTaskDelete(awtrix_display_handle);
 	awtrix_display_handle = NULL;
@@ -123,7 +148,9 @@ void awtrix_status(void *pvParameters) //任务函数
 			awtrix_map_set_clock(timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
 			vTaskDelay(pdMS_TO_TICKS(1000));
 			break;
-
+		case 2:
+			
+			break;
 		default:
 			break;
 		}
@@ -152,7 +179,7 @@ int awtrix_init(void)
 	if (timeinfo.tm_year < (2016 - 1900))
 	{
 		ESP_LOGI(TAG, "Time is not set yet. Connecting to WiFi and getting time over NTP.");
-		wifi_init_sta();
+		wifi_init_sta(EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
 
 		// update 'now' variable with current time
 		time(&now);
