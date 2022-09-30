@@ -17,6 +17,9 @@
 extern "C" {
 #endif
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "esp_err.h"
 
 #define NUMBER_FONT_START_X (2) // 字体偏移，左上角为原点
@@ -25,6 +28,16 @@ extern "C" {
 #define NUMBER_FONT_RAW (3) // 数字字体列数
 #define AWTRIX_MAX_RAW (8) // 屏幕像素点行数
 #define AWTRIX_MAX_COL (32)  // 屏幕像素点列数
+
+
+#define AWTRIX_WEATHER_SERVER_HOST      "api.seniverse.com"
+#define AWTRIX_WEATHER_SERVER_URL       "/v3/weather"
+#define AWTRIX_WEATHER_SERVER_PUB_KEY   "P5KX8Xuo9Uaf6NbAY"
+#define AWTRIX_WEATHER_SERVER_PRI_KEY   "S95aobioJH_vZfDlB"
+#define AWTRIX_WEATHER_SERVER_CITY      "tianjin"
+#define AWTRIX_WEATHER_SERVER_LANG      "en"//"zh-Hans"
+#define AWTRIX_WEATHER_SERVER_UNIT      "c"
+
 
 #define AWTRIX_DISPLAY_CLOCK_HOURS_12   1   // 12小时制
 
@@ -43,24 +56,46 @@ typedef union{
     uint32_t rgb;
 }pixel_u;
 
+
+typedef struct 
+{
+    char type[10];      // 天气类型
+    int temperature;    // 温度
+}weather_t;
+
+
 void init_led();
+
+int	awtrix_init();
 
 void set_rgb(int led_num, uint16_t Red, uint16_t Green, uint16_t Blue);
 
-int awtrix_init(void);
-
-void awtrix_map_pixel_init();
-
-pixel_u *awrtix_map_get_pixel(void);
-
-int awtrix_map_set_clock(int hours, int minutes, int seconds);
-
-int awtrix_map_wifi_init();
-
-int awtrix_map_display_clear();
-
+int awtrix_map_set_clock(pixel_u *pixel, int hours, int minutes, int seconds);
 
 int awtrix_effect_scroll(pixel_u *pixel);
+
+int awtrix_map_wifi_init(pixel_u *pixel);
+
+
+
+void awtrix_pixel_init(pixel_u *pixel);
+
+int awtrix_pixel_add_char(pixel_u *local_pixel, int raw, int col, uint8_t ch, uint8_t cover, uint8_t red, uint8_t green, uint8_t blue);
+
+int awtrix_pixel_add_string(pixel_u *pixel, int raw, int col, char *str, uint8_t cover, uint8_t red, uint8_t green, uint8_t blue);
+
+int awtrix_pixel_clear(pixel_u *pixel);
+
+int awtrix_weather_init();
+
+
+
+
+int awtrix_weather_init();
+
+int awtrix_weather_get(weather_t * weather);
+
+
 
 #ifdef __cplusplus
 }

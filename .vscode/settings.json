@@ -4,6 +4,15 @@
         "awtrix.h": "c",
         "esp_err.h": "c",
         "map": "c",
-        "shape.h": "c"
+        "shape.h": "c",
+        "awtrix_api.h": "c",
+        "event_groups.h": "c",
+        "freertos.h": "c",
+        "stdlib.h": "c",
+        "awtrix_weather.h": "c",
+        "stdio.h": "c",
+        "ws2812.h": "c",
+        "esp_tls.h": "c",
+        "esp_netif.h": "c"
     }
 }
