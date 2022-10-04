@@ -15,7 +15,6 @@
 #include "esp_system.h"
 #include "esp_event.h"
 #include "esp_log.h"
-// #include "nvs_flash.h"
 
 #include "lwip/err.h"
 #include "lwip/sys.h"
@@ -55,9 +54,9 @@ static void initialize_sntp(void)
 {
     ESP_LOGI(TAG, "Initializing SNTP");
     sntp_setoperatingmode(SNTP_OPMODE_POLL);
-    sntp_setservername(0, "cn.pool.ntp.org"); // 中国区NTP服务的虚拟集群
+    sntp_setservername(1, "ntp1.aliyun.com");
+    sntp_setservername(2, "cn.pool.ntp.org"); // 中国区NTP服务的虚拟集群
     sntp_setservername(1, "210.72.145.44"); // 国家授时中心服务器 IP 地址
-    sntp_setservername(2, "ntp1.aliyun.com");
     sntp_setservername(3, "1.cn.pool.ntp.org");
     sntp_set_time_sync_notification_cb(time_sync_notification_cb);
 #ifdef CONFIG_SNTP_TIME_SYNC_METHOD_SMOOTH
@@ -100,7 +99,7 @@ static void event_handler(void *arg, esp_event_base_t event_base,
         time_t now = 0;
         struct tm timeinfo = {0};
         int retry = 0;
-        const int retry_count = 10;
+        const int retry_count = 1;
         while (sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET && ++retry < retry_count)
         {
             ESP_LOGI(TAG, "Waiting for system time to be set... (%d/%d)", retry, retry_count);
@@ -111,8 +110,9 @@ static void event_handler(void *arg, esp_event_base_t event_base,
     }
 }
 
-void wifi_init_sta(const char *ssid, const char *passwd)
+esp_err_t wifi_init_sta(const char *ssid, const char *passwd)
 {
+    esp_err_t ret;
     s_wifi_event_group = xEventGroupCreate();
 
     ESP_ERROR_CHECK(esp_netif_init());
@@ -168,14 +168,17 @@ void wifi_init_sta(const char *ssid, const char *passwd)
      * happened. */
     if (bits & WIFI_CONNECTED_BIT)
     {
+        ret = ESP_OK;
         ESP_LOGI(TAG, "connected to ap ");
     }
     else if (bits & WIFI_FAIL_BIT)
     {
+        ret = ESP_FAIL;
         ESP_LOGI(TAG, "Failed to connect");
     }
     else
     {
+        ret = ESP_FAIL;
         ESP_LOGE(TAG, "UNEXPECTED EVENT");
     }
 
@@ -183,4 +186,5 @@ void wifi_init_sta(const char *ssid, const char *passwd)
     ESP_ERROR_CHECK(esp_event_handler_instance_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, instance_got_ip));
     ESP_ERROR_CHECK(esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, instance_any_id));
     vEventGroupDelete(s_wifi_event_group);
+    return ret;
 }

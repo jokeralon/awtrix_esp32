@@ -1,10 +1,12 @@
 #include "awtrix_weather.h"
-#include "esp_http_client.h"
 #include <stdbool.h>
+#include <string.h>
 #include "awtrix.h"
 #include "awtrix_api.h"
 #include "fonts.h"
+#include "shape.h"
 
+#include "esp_http_client.h"
 #include <string.h>
 #include <stdlib.h>
 #include "freertos/FreeRTOS.h"
@@ -19,18 +21,47 @@
 #include "esp_http_client.h"
 #include "cJSON.h"
 
+#include "lwip/err.h"
+#include "lwip/sockets.h"
+#include "lwip/sys.h"
+#include "lwip/netdb.h"
+#include "lwip/dns.h"
+
+#include "esp_tls.h"
+#include "esp_crt_bundle.h"
+
 static const char *TAG = "awtrix_weather";
 
 char *weather_post_buff = NULL;
+
+
+// const char *weather_code[37] = {
+//     "Sunny" /*晴（国内城市白天晴)*/, "Clear" /*晴（国内城市夜晚晴）*/, "Fair" /*晴（国外城市白天晴）*/,
+//     "Cloudy" /*多云*/, "Partly Cloudy" /*晴间多云*/, "Mostly Cloudy" /*晴间多云*/,
+//     "Overcast" /*阴*/, "Shower" /*阵雨*/, "Thundershower" /*雷阵雨*/,
+//     "Thundershower with Hail" /*雷阵雨伴有冰雹*/, "Light Rain" /*小雨*/, "Moderate Rain" /*中雨*/,
+//     "Heavy Rain" /*大雨*/, "Storm" /*暴雨*/, "Heavy Storm" /*大暴雨*/, "Severe Storm" /*特大暴雨*/,
+//     "Ice Rain" /*冻雨*/, "Sleet" /*雨夹雪*/, "Snow Flurry" /*阵雪*/,
+//     "Light Snow" /*小雪*/, "Moderate Snow" /*中雪*/, "Heavy Snow" /*大雪*/,
+//     "Snowstorm" /*暴雪*/, "Dust" /*浮尘*/, "Sand" /*扬沙*/,
+//     "Duststorm" /*沙尘暴*/, "Sandstorm" /*强沙尘暴*/, "Foggy" /*雾	Foggy*/,
+//     "Haze" /*霾*/, "Windy" /*风*/, "Blustery" /*大风*/,
+//     "Hurricane" /*飓风*/, "Tropical Storm" /*热带风暴*/, "Tornado" /*龙卷风*/,
+//     "Cold" /*冷*/, "Hot" /*热	Hot*/, "Unknown" /*未知*/
+// };
 
 int awtrix_weather_init()
 {
     int p = 0;
     weather_post_buff = malloc(sizeof(char) * 150);
     p += snprintf(weather_post_buff + p, 150, "http://%s%s", AWTRIX_WEATHER_SERVER_HOST, AWTRIX_WEATHER_SERVER_URL);
-    p += snprintf(weather_post_buff + p, 150, "/now.json?key=%s", AWTRIX_WEATHER_SERVER_PRI_KEY);
+#if (AWTRIX_WEATHER_SERVICE_VENDOR == XINZHI_WEATHER)
+    p += snprintf(weather_post_buff + p, 150, "/now.json?key=%s", AWTRIX_WEATHER_SERVER_KEY);
+#elif (AWTRIX_WEATHER_SERVICE_VENDOR == HEFENG_WEATHER)
+    p += snprintf(weather_post_buff + p, 150, "/now?key=%s", AWTRIX_WEATHER_SERVER_KEY);
+#endif
     p += snprintf(weather_post_buff + p, 150, "&location=%s", AWTRIX_WEATHER_SERVER_CITY);
-    p += snprintf(weather_post_buff + p, 150, "&language=%s&unit=c", AWTRIX_WEATHER_SERVER_LANG);
+    p += snprintf(weather_post_buff + p, 150, "&language=%s", AWTRIX_WEATHER_SERVER_LANG);
     p += snprintf(weather_post_buff + p, 150, "&unit=%s", AWTRIX_WEATHER_SERVER_UNIT);
     p += snprintf(weather_post_buff + p, 150, "\0");
 
@@ -125,6 +156,7 @@ int awtrix_weather_get(weather_t *weather)
         return -1;
     char local_response_buffer[256] = {0};
     esp_http_client_config_t config = {
+        .method = HTTP_METHOD_GET,
         .url = weather_post_buff,
         .event_handler = _http_event_handler,
         .user_data = local_response_buffer, // Pass address of local buffer to get response
@@ -145,6 +177,10 @@ int awtrix_weather_get(weather_t *weather)
         esp_http_client_cleanup(client);
         return -1;
     }
+
+    printf("%s\n", local_response_buffer);
+
+    esp_http_client_cleanup(client); // 清除http client
 
     cJSON *root = cJSON_Parse(local_response_buffer); //读取心知天气回调包
     if (root == NULL)
@@ -171,14 +207,103 @@ int awtrix_weather_get(weather_t *weather)
     if (now_temperature == NULL)
         return -1;
 
-    memset(weather->type, '\0', sizeof(weather->type));
-    memcpy(weather->type, now_text->valuestring, strlen(now_text->valuestring));
+    int code = atoi(now_code->valuestring);
+
+    if ((code >= AWTRIX_WEATHER_MIN_SUNNY) && (code <= AWTRIX_WEATHER_MAX_SUNNY))
+    {
+        weather->type = WEATHER_SUN;
+        weather->level = code - AWTRIX_WEATHER_MIN_SUNNY;
+    }
+    else if ((code >= AWTRIX_WEATHER_MIN_CLOUDY) && (code <= AWTRIX_WEATHER_MAX_CLOUDY))
+    {
+        weather->type = WEATHER_CLOUDY;
+        weather->level = code - AWTRIX_WEATHER_MIN_CLOUDY;
+    }
+    else if ((code >= AWTRIX_WEATHER_MIN_RAIN) && (code <= AWTRIX_WEATHER_MAX_RAIN))
+    {
+        weather->type = WEATHER_RAIN;
+        weather->level = code - AWTRIX_WEATHER_MIN_RAIN;
+    }
+    else if ((code >= AWTRIX_WEATHER_MIN_SNOW) && (code <= AWTRIX_WEATHER_MAX_SNOW))
+    {
+        weather->type = WEATHER_SNOW;
+        weather->level = code - AWTRIX_WEATHER_MIN_SNOW;
+    }
+    else if ((code >= AWTRIX_WEATHER_MIN_DUST) && (code <= AWTRIX_WEATHER_MAX_DUST))
+    {
+        weather->type = WEATHER_DUST;
+        weather->level = code - AWTRIX_WEATHER_MIN_DUST;
+    }
+    else if ((code >= AWTRIX_WEATHER_MIN_WINDY) && (code <= AWTRIX_WEATHER_MAX_WINDY))
+    {
+        weather->type = WEATHER_WINDY;
+        weather->level = code - AWTRIX_WEATHER_MIN_WINDY;
+    }
+    else if ((code >= AWTRIX_WEATHER_MIN_CLOD) && (code <= AWTRIX_WEATHER_MAX_CLOD))
+    {
+        weather->type = WEATHER_COLD;
+        weather->level = code - AWTRIX_WEATHER_MIN_CLOD;
+    }
+    else if ((code >= AWTRIX_WEATHER_MIN_HOT) && (code <= AWTRIX_WEATHER_MAX_HOT))
+    {
+        weather->type = WEATHER_HOT;
+        weather->level = code - AWTRIX_WEATHER_MIN_HOT;
+    }
+    else if ((code >= AWTRIX_WEATHER_MIN_UNKONW) && (code <= AWTRIX_WEATHER_MAX_UNKONW))
+    {
+        weather->type = WEATHER_UNKONW;
+        weather->level = code - AWTRIX_WEATHER_MIN_UNKONW;
+    }
+    else
+    {
+        weather->type = -1;
+        weather->level = -1;
+    }
+
+    memset(weather->text, '\0', sizeof(weather->text));
+    memcpy(weather->text, now_text->valuestring, strlen(now_text->valuestring));
     weather->temperature = atoi(now_temperature->valuestring);
 
-    printf("weather->type: %s\n", weather->type);
+    printf("weather->text: %s\n", weather->text);
     printf("weather->temperature: %d\n", weather->temperature);
+    printf("weather->type: %d\n", weather->type);
+    printf("weather->level: %d\n", weather->level);
 
     cJSON_Delete(root);
+
+    // free(weather_post_buff);
+    // weather_post_buff = NULL;
+    
+    return 0;
+}
+
+extern int awtrix_pixel_clear(pixel_u *pixel);
+extern int awtrix_pixel_set_cursor(int x, int y);
+extern int awtrix_pixel_add_weather(pixel_u *local_pixel, uint8_t index, uint8_t cover, uint8_t red, uint8_t green, uint8_t blue);
+extern int awtrix_pixel_add_icon(pixel_u *local_pixel, uint8_t index, uint8_t cover, uint8_t red, uint8_t green, uint8_t blue);
+extern int awtrix_pixel_add_char(pixel_u *local_pixel, uint8_t ch, uint8_t cover, uint8_t red, uint8_t green, uint8_t blue);
+
+int awtrix_display_set_temp(pixel_u *pixel, weather_t *weather)
+{
+    if (weather == NULL)
+        return -1;
+
+    int temp_low = weather->temperature % 10;
+    int temp_high = weather->temperature / 10;
+
+    awtrix_pixel_clear(pixel);
+    awtrix_pixel_set_cursor(1, 0);
+    awtrix_pixel_add_icon(pixel, 2, 1, 0x00, 0x00, 0x10);
+    awtrix_pixel_set_cursor(11, 1);
+    awtrix_pixel_add_char(pixel, temp_high+'0', 1, 0x00, 0x00, 0x10);
+    awtrix_pixel_set_cursor(15, 1);
+    awtrix_pixel_add_char(pixel, temp_low+'0', 1, 0x00, 0x00, 0x10);
+    awtrix_pixel_set_cursor(18, 2);
+    awtrix_pixel_add_char(pixel, '.', 0, 0x00, 0x00, 0x10);
+    awtrix_pixel_set_cursor(21, 1);
+    awtrix_pixel_add_char(pixel, '0', 1, 0x00, 0x00, 0x10);
+    awtrix_pixel_set_cursor(25, 1);
+    awtrix_pixel_add_char(pixel, '\'', 1, 0x00, 0x00, 0x10);
 
     return 0;
 }

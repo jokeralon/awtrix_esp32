@@ -13,6 +13,12 @@
         "stdio.h": "c",
         "ws2812.h": "c",
         "esp_tls.h": "c",
-        "esp_netif.h": "c"
+        "esp_netif.h": "c",
+        "esp_sntp.h": "c",
+        "time.h": "c",
+        "sys.h": "c",
+        "esp_system.h": "c",
+        "esp_http_client.h": "c",
+        "esp_adc_cal.h": "c"
     }
 }

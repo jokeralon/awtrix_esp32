@@ -29,14 +29,68 @@ extern "C" {
 #define AWTRIX_MAX_RAW (8) // 屏幕像素点行数
 #define AWTRIX_MAX_COL (32)  // 屏幕像素点列数
 
+#define XINZHI_WEATHER         0
+#define HEFENG_WEATHER         1
 
+#define AWTRIX_WEATHER_SERVICE_VENDOR   XINZHI_WEATHER
+
+#if (AWTRIX_WEATHER_SERVICE_VENDOR == XINZHI_WEATHER)
 #define AWTRIX_WEATHER_SERVER_HOST      "api.seniverse.com"
 #define AWTRIX_WEATHER_SERVER_URL       "/v3/weather"
-#define AWTRIX_WEATHER_SERVER_PUB_KEY   "P5KX8Xuo9Uaf6NbAY"
-#define AWTRIX_WEATHER_SERVER_PRI_KEY   "S95aobioJH_vZfDlB"
+#define AWTRIX_WEATHER_SERVER_KEY       "S95aobioJH_vZfDlB"
 #define AWTRIX_WEATHER_SERVER_CITY      "tianjin"
 #define AWTRIX_WEATHER_SERVER_LANG      "en"//"zh-Hans"
 #define AWTRIX_WEATHER_SERVER_UNIT      "c"
+#elif (AWTRIX_WEATHER_SERVICE_VENDOR == HEFENG_WEATHER)
+#define AWTRIX_WEATHER_SERVER_HOST      "devapi.qweather.com"
+#define AWTRIX_WEATHER_SERVER_URL       "/v7/weather"
+#define AWTRIX_WEATHER_SERVER_KEY   "94f0039e742d4341a7bd3a560815b315"
+#define AWTRIX_WEATHER_SERVER_CITY      "101031500" // 天津市 南开区
+#define AWTRIX_WEATHER_SERVER_LANG      "en"//"zh-Hans"
+#define AWTRIX_WEATHER_SERVER_UNIT      "c"
+#endif
+
+#define AWTRIX_WEATHER_MIN_SUNNY        0
+#define AWTRIX_WEATHER_MAX_SUNNY        3
+
+#define AWTRIX_WEATHER_MIN_CLOUDY       4
+#define AWTRIX_WEATHER_MAX_CLOUDY       9
+
+#define AWTRIX_WEATHER_MIN_RAIN         10
+#define AWTRIX_WEATHER_MAX_RAIN         19
+
+#define AWTRIX_WEATHER_MIN_SNOW         20
+#define AWTRIX_WEATHER_MAX_SNOW         25
+
+#define AWTRIX_WEATHER_MIN_DUST         26
+#define AWTRIX_WEATHER_MAX_DUST         29
+
+#define AWTRIX_WEATHER_MIN_WINDY        30
+#define AWTRIX_WEATHER_MAX_WINDY        36
+
+#define AWTRIX_WEATHER_MIN_CLOD         37
+#define AWTRIX_WEATHER_MAX_CLOD         37
+
+#define AWTRIX_WEATHER_MIN_HOT          38
+#define AWTRIX_WEATHER_MAX_HOT          38
+
+#define AWTRIX_WEATHER_MIN_UNKONW           39
+#define AWTRIX_WEATHER_MAX_UNKONW           39
+
+
+enum awtrix_weather_type
+{
+    WEATHER_SUN = 0,
+    WEATHER_CLOUDY,
+    WEATHER_RAIN,
+    WEATHER_SNOW,
+    WEATHER_DUST,
+    WEATHER_WINDY,
+    WEATHER_COLD,
+    WEATHER_HOT,
+    WEATHER_UNKONW,
+};
+
 
 
 #define AWTRIX_DISPLAY_CLOCK_HOURS_12   1   // 12小时制
@@ -59,8 +113,10 @@ typedef union{
 
 typedef struct 
 {
-    char type[10];      // 天气类型
+    char text[20];      // 天气类型
     int temperature;    // 温度
+    int type;
+    int level;
 }weather_t;
 
 
@@ -70,32 +126,18 @@ int	awtrix_init();
 
 void set_rgb(int led_num, uint16_t Red, uint16_t Green, uint16_t Blue);
 
-int awtrix_map_set_clock(pixel_u *pixel, int hours, int minutes, int seconds);
+int awtrix_display_set_clock(pixel_u *pixel, int hours, int minutes, int seconds);
 
 int awtrix_effect_scroll(pixel_u *pixel);
 
-int awtrix_map_wifi_init(pixel_u *pixel);
-
-
-
-void awtrix_pixel_init(pixel_u *pixel);
-
-int awtrix_pixel_add_char(pixel_u *local_pixel, int raw, int col, uint8_t ch, uint8_t cover, uint8_t red, uint8_t green, uint8_t blue);
-
-int awtrix_pixel_add_string(pixel_u *pixel, int raw, int col, char *str, uint8_t cover, uint8_t red, uint8_t green, uint8_t blue);
-
-int awtrix_pixel_clear(pixel_u *pixel);
-
-int awtrix_weather_init();
-
-
+int awtrix_display_set_wifi(pixel_u *pixel);
 
 
 int awtrix_weather_init();
 
 int awtrix_weather_get(weather_t * weather);
 
-
+int awtrix_display_set_temp(pixel_u *pixel, weather_t *weather);
 
 #ifdef __cplusplus
 }

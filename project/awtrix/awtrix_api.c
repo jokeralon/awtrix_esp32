@@ -1,5 +1,6 @@
 #include "awtrix.h"
 #include "awtrix_api.h"
+#include "shape.h"
 
 // static uint8_t awtrix_point_map[AWTRIX_MAX_RAW][AWTRIX_MAX_COL] = {
 //     {0, 15, 16, 31, 32, 47, 48, 63, 64, 79, 80, 95, 96, 111, 112, 127, 128, 143, 144, 159, 160, 175, 176, 191, 192, 207, 208, 223, 224, 239, 240, 255},
@@ -12,28 +13,132 @@
 //     {7, 8, 23, 24, 39, 40, 55, 56, 71, 72, 87, 88, 103, 104, 119, 120, 135, 136, 151, 152, 167, 168, 183, 184, 199, 200, 215, 216, 231, 232, 247, 248},
 // };
 
-ascii_5_3_font_t ascii_font[FONTS_ASCII_5_3_NUMBER];
+static int awtrix_pixel_cursor_x = 0;
+static int awtrix_pixel_cursor_y = 0;
 
-void awtrix_pixel_init(pixel_u *pixel)
+ascii_5_3_font_t ascii_font[FONTS_ASCII_5_3_NUMBER];
+weather_shape_t weather_shape[8];
+icon_shape_t icon_shape[8];
+awtrix_t awtrix_api;
+
+int awtrix_pixel_set_cursor(int x, int y)
+{
+    if ((x < 0) || (x >= AWTRIX_MAX_COL) || (y < 0) || (y >= AWTRIX_MAX_RAW))
+        return -1;
+    awtrix_pixel_cursor_x = x;
+    awtrix_pixel_cursor_y = y;
+
+    return 0;
+}
+int awtrix_pixel_get_cursor(int *x, int *y)
+{
+    if ((x == NULL) || (y == NULL))
+        return -1;
+    *x = awtrix_pixel_cursor_x;
+    *y = awtrix_pixel_cursor_y;
+
+    return 0;
+}
+
+awtrix_t awtrix_pixel_init(pixel_u *pixel)
 {
     fonts_ascii_5_3_init(ascii_font);
+    weather_shape_init(weather_shape);
+    icon_shape_init(icon_shape);
 
     for (int i = 0; i < AWTRIX_MAX_RAW; i++)
     {
         for (int j = 0; j < AWTRIX_MAX_COL; j++)
         {
-            pixel[i*AWTRIX_MAX_COL+j].rgb = 0;
+            pixel[i * AWTRIX_MAX_COL + j].rgb = 0;
         }
     }
+
+    awtrix_api.clear = &awtrix_pixel_clear;
+    awtrix_api.getCursor = &awtrix_pixel_get_cursor;
+    awtrix_api.setCursor = &awtrix_pixel_set_cursor;
+    awtrix_api.showChar = &awtrix_pixel_add_char;
+    awtrix_api.showString = &awtrix_pixel_add_string;
+
+    return awtrix_api;
 }
 
-int awtrix_pixel_add_char(pixel_u *local_pixel, int raw, int col, uint8_t ch, uint8_t cover, uint8_t red, uint8_t green, uint8_t blue)
+int awtrix_pixel_add_weather(pixel_u *local_pixel, uint8_t index, uint8_t cover, uint8_t red, uint8_t green, uint8_t blue)
 {
 
-    pixel_u *pixel[AWTRIX_MAX_COL];
+    pixel_u *pixel[AWTRIX_MAX_RAW];
 
-    for( int i=0; i<AWTRIX_MAX_RAW;i++ )
-        pixel[i] = &local_pixel[i*AWTRIX_MAX_COL];
+    for (int i = 0; i < AWTRIX_MAX_RAW; i++)
+        pixel[i] = &local_pixel[i * AWTRIX_MAX_COL];
+
+    for (int i = 0; i < 8; i++)
+    {
+        for (int j = 0; j < 8; j++)
+        {
+            if (weather_shape[index].shape[i * 8 + j] == 1)
+            {
+                pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].r = red;
+                pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].g = green;
+                pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].b = blue;
+            }
+            else
+            {
+                if (cover == 1)
+                {
+                    pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].rgb = 0;
+                }
+            }
+        }
+    }
+    awtrix_pixel_cursor_x += 4;
+    return 0;
+}
+
+
+int awtrix_pixel_add_icon(pixel_u *local_pixel, uint8_t index, uint8_t cover, uint8_t red, uint8_t green, uint8_t blue)
+{
+
+    pixel_u *pixel[AWTRIX_MAX_RAW];
+
+    for (int i = 0; i < AWTRIX_MAX_RAW; i++)
+        pixel[i] = &local_pixel[i * AWTRIX_MAX_COL];
+
+    for (int i = 0; i < 8; i++)
+    {
+        for (int j = 0; j < 8; j++)
+        {
+            if (icon_shape[index].shape[i * 8 + j] == 1)
+            {
+                pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].r = red;
+                pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].g = green;
+                pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].b = blue;
+            }
+            else if(icon_shape[index].shape[i * 8 + j] == 2)
+            {
+                pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].r = green;
+                pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].g = blue;
+                pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].b = red;
+            }
+            else
+            {
+                if (cover == 1)
+                {
+                    pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].rgb = 0;
+                }
+            }
+        }
+    }
+    awtrix_pixel_cursor_x += 4;
+    return 0;
+}
+
+int awtrix_pixel_add_char(pixel_u *local_pixel, uint8_t ch, uint8_t cover, uint8_t red, uint8_t green, uint8_t blue)
+{
+
+    pixel_u *pixel[AWTRIX_MAX_RAW];
+
+    for (int i = 0; i < AWTRIX_MAX_RAW; i++)
+        pixel[i] = &local_pixel[i * AWTRIX_MAX_COL];
 
     if ((ch < ' ') || (ch > '`'))
         return -1;
@@ -44,40 +149,34 @@ int awtrix_pixel_add_char(pixel_u *local_pixel, int raw, int col, uint8_t ch, ui
         {
             if (ascii_font[ch - ' '].font[i * 3 + j] == 1)
             {
-                // printf("* ");
-                // 添加坐标偏移，position: 字体向左偏移，NUMBER_FONT_RAW: 3个像素点，一个数字字体列数
-                // map[i+NUMBER_FONT_START_Y][j+NUMBER_FONT_START_X + (position*(NUMBER_FONT_RAW+1))] = 1;
-                if (((i + raw) >= AWTRIX_MAX_RAW) || ((j + col) >= AWTRIX_MAX_COL))
-                    return -1;
-                pixel[i + raw][j + col].r = red;
-                pixel[i + raw][j + col].g = green;
-                pixel[i + raw][j + col].b = blue;
+                pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].r = red;
+                pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].g = green;
+                pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].b = blue;
             }
             else
             {
                 if (cover == 1)
                 {
-                    pixel[i + raw][j + col].rgb = 0;
+                    pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].rgb = 0;
                 }
             }
         }
     }
+    awtrix_pixel_cursor_x += 4;
     return 0;
 }
 
-int awtrix_pixel_add_string(pixel_u *pixel, int raw, int col, char *str, uint8_t cover, uint8_t red, uint8_t green, uint8_t blue)
+int awtrix_pixel_add_string(pixel_u *pixel, char *str, uint8_t cover, uint8_t red, uint8_t green, uint8_t blue)
 {
     int ret = -1;
     for (int i = 0; i < strlen(str); i++)
     {
-        ret = awtrix_pixel_add_char(pixel, col, (raw + i * 4), str[i], cover, red, green, blue);
+        ret = awtrix_pixel_add_char(pixel, str[i], cover, red, green, blue);
         if (ret != 0)
             return ret;
     }
     return 0;
 }
-
-
 
 int awtrix_pixel_clear(pixel_u *pixel)
 {
@@ -85,7 +184,7 @@ int awtrix_pixel_clear(pixel_u *pixel)
     {
         for (int j = 0; j < AWTRIX_MAX_COL; j++)
         {
-            pixel[i*AWTRIX_MAX_COL+j].rgb = 0;
+            pixel[i * AWTRIX_MAX_COL + j].rgb = 0;
         }
     }
     return 0;

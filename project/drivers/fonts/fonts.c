@@ -90,8 +90,8 @@ static const uint8_t font_ascii_38[5][3] =
 */
 static const uint8_t font_ascii_39[5][3] =
 {
-    {0, 1, 0},
-    {0, 1, 0},
+    {1, 1, 0},
+    {1, 1, 0},
     {0, 0, 0},
     {0, 0, 0},
     {0, 0, 0},

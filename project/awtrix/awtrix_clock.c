@@ -6,7 +6,7 @@
 static int awtrix_clock_num = 0;
 static uint8_t awtrix_clock_bar_effect = 0x01;
 
-int awtrix_map_set_clock(pixel_u *pixel, int hours, int minutes, int seconds)
+int awtrix_display_set_clock(pixel_u *pixel, int hours, int minutes, int seconds)
 {
     int hours_high = 0;
     int hours_low = 0;
@@ -32,11 +32,13 @@ int awtrix_map_set_clock(pixel_u *pixel, int hours, int minutes, int seconds)
     {
         if ((awtrix_clock_bar_effect >> i) & 0x01)
         {
-            ESP_ERROR_CHECK(awtrix_pixel_add_char(pixel, 3, (2 + (i * 4)), '_', 1, 0x10, 0x00, 0x00));
+            awtrix_pixel_set_cursor((2 + (i * 4)), 3);
+            awtrix_pixel_add_char(pixel, '_', 1, 0x10, 0x00, 0x00);
         }
         else
         {
-            ESP_ERROR_CHECK(awtrix_pixel_add_char(pixel, 3, (2 + (i * 4)), '_', 1, 0, 0x00, 0x00));
+            awtrix_pixel_set_cursor((2 + (i * 4)), 3);
+            awtrix_pixel_add_char(pixel, '_', 1, 0, 0x00, 0x00);
         }
     }
 
@@ -56,14 +58,22 @@ int awtrix_map_set_clock(pixel_u *pixel, int hours, int minutes, int seconds)
         seconds_high = seconds / 10;
         seconds_low = seconds % 10;
 
-        awtrix_pixel_add_char(pixel, 1, 2, (hours_high + '0'), 1, 0x10, 0x00, 0x00);
-        awtrix_pixel_add_char(pixel, 1, 6, (hours_low + '0'), 1, 0x10, 0x00, 0x00);
-        awtrix_pixel_add_char(pixel, 1, 9, ':', 0, 0x10, 0x00, 0x00);
-        awtrix_pixel_add_char(pixel, 1, 12, (minutes_high + '0'), 1, 0x10, 0x00, 0x00);
-        awtrix_pixel_add_char(pixel, 1, 16, (minutes_low + '0'), 1, 0x10, 0x00, 0x00);
-        awtrix_pixel_add_char(pixel, 1, 19, ':', 0, 0x10, 0x00, 0x00);
-        awtrix_pixel_add_char(pixel, 1, 22, (seconds_high + '0'), 1, 0x10, 0x00, 0x00);
-        awtrix_pixel_add_char(pixel, 1, 26, (seconds_low + '0'), 1, 0x10, 0x00, 0x00);
+        awtrix_pixel_set_cursor(2, 1);
+        awtrix_pixel_add_char(pixel, (hours_high + '0'), 1, 0x10, 0x00, 0x00);
+        awtrix_pixel_set_cursor(6, 1);
+        awtrix_pixel_add_char(pixel, (hours_low + '0'), 1, 0x10, 0x00, 0x00);
+        awtrix_pixel_set_cursor(9, 1);
+        awtrix_pixel_add_char(pixel, ':', 0, 0x10, 0x00, 0x00);
+        awtrix_pixel_set_cursor(12, 1);
+        awtrix_pixel_add_char(pixel, (minutes_high + '0'), 1, 0x10, 0x00, 0x00);
+        awtrix_pixel_set_cursor(16, 1);
+        awtrix_pixel_add_char(pixel, (minutes_low + '0'), 1, 0x10, 0x00, 0x00);
+        awtrix_pixel_set_cursor(19, 1);
+        awtrix_pixel_add_char(pixel, ':', 0, 0x10, 0x00, 0x00);
+        awtrix_pixel_set_cursor(22, 1);
+        awtrix_pixel_add_char(pixel, (seconds_high + '0'), 1, 0x10, 0x00, 0x00);
+        awtrix_pixel_set_cursor(26, 1);
+        awtrix_pixel_add_char(pixel, (seconds_low + '0'), 1, 0x10, 0x00, 0x00);
     }
     else
     {
@@ -75,22 +85,37 @@ int awtrix_map_set_clock(pixel_u *pixel, int hours, int minutes, int seconds)
         seconds_high = seconds / 10;
         seconds_low = seconds % 10;
 
-        awtrix_pixel_add_char(pixel, 1, 2, ((hours < 12) ? 'A' : 'P'), 1, 0x10, 0x00, 0x00);
-        awtrix_pixel_add_char(pixel, 1, 6, 'M', 1, 0x10, 0x00, 0x00);
-        awtrix_pixel_add_char(pixel, 1, 10, ' ', 1, 0x10, 0x00, 0x00);
-        awtrix_pixel_add_char(pixel, 1, 12, (hours_high + '0'), 1, 0x10, 0x00, 0x00);
-        awtrix_pixel_add_char(pixel, 1, 16, (hours_low + '0'), 1, 0x10, 0x00, 0x00);
-        awtrix_pixel_add_char(pixel, 1, 19, ':', 0, 0x10, 0x00, 0x00);
-        awtrix_pixel_add_char(pixel, 1, 22, (minutes_high + '0'), 1, 0x10, 0x00, 0x00);
-        awtrix_pixel_add_char(pixel, 1, 26, (minutes_low + '0'), 1, 0x10, 0x00, 0x00);
+        awtrix_pixel_set_cursor(2, 1);
+        awtrix_pixel_add_char(pixel, ((hours < 12) ? 'A' : 'P'), 1, 0x10, 0x00, 0x00);
+        awtrix_pixel_set_cursor(6, 1);
+        awtrix_pixel_add_char(pixel, 'M', 1, 0x10, 0x00, 0x00);
+        awtrix_pixel_set_cursor(10, 1);
+        awtrix_pixel_add_char(pixel, ' ', 1, 0x10, 0x00, 0x00);
+        awtrix_pixel_set_cursor(12, 1);
+        awtrix_pixel_add_char(pixel, (hours_high + '0'), 1, 0x10, 0x00, 0x00);
+        awtrix_pixel_set_cursor(16, 1);
+        awtrix_pixel_add_char(pixel, (hours_low + '0'), 1, 0x10, 0x00, 0x00);
+        awtrix_pixel_set_cursor(19, 1);
+        awtrix_pixel_add_char(pixel, ':', 0, 0x10, 0x00, 0x00);
+        awtrix_pixel_set_cursor(22, 1);
+        awtrix_pixel_add_char(pixel, (minutes_high + '0'), 1, 0x10, 0x00, 0x00);
+        awtrix_pixel_set_cursor(26, 1);
+        awtrix_pixel_add_char(pixel, (minutes_low + '0'), 1, 0x10, 0x00, 0x00);
     }
 
     return 0;
 }
 
-int awtrix_map_wifi_init(pixel_u *pixel)
+int awtrix_display_set_wifi(pixel_u *pixel)
 {
-    awtrix_pixel_add_string(pixel, 1, 2, "WIFI INIT\0", 1, 0x00, 0x00, 0x10);
+    awtrix_pixel_set_cursor(4, 1);
+    awtrix_pixel_add_char(pixel, 'W', 1, 0x10, 0x00, 0x10);
+    awtrix_pixel_set_cursor(11, 1);
+    awtrix_pixel_add_char(pixel, 'I', 1, 0x00, 0x00, 0x10);
+    awtrix_pixel_set_cursor(18, 1);
+    awtrix_pixel_add_char(pixel, 'F', 1, 0x00, 0x10, 0x00);
+    awtrix_pixel_set_cursor(25, 1);
+    awtrix_pixel_add_char(pixel, 'I', 1, 0x10, 0x00, 0x00);
 
     return 0;
 }

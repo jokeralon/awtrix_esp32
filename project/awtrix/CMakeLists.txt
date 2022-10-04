@@ -13,5 +13,5 @@ idf_component_register(SRCS "awtrix_clock.c"
                                 mbedtls
                                 esp-tls
                                 json
-                                
+                                esp_adc_cal
                     )

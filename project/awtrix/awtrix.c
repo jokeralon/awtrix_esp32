@@ -8,21 +8,27 @@
 #include "freertos/task.h"
 #include "esp_system.h"
 #include "wifi.h"
+#include "esp_sntp.h"
 #include <time.h>
 #include <sys/time.h>
 
-#include "awtrix_weather.h"
+#include "driver/adc.h"
+#include "esp_adc_cal.h"
+
 #include "awtrix_api.h"
+#include "awtrix_weather.h"
 #include "ws2812.h"
+#include "fft.h"
+#include "adc.h"
 
 static const char *TAG = "awtrix";
 
-#define EXAMPLE_ESP_WIFI_SSID "pppppp"
-#define EXAMPLE_ESP_WIFI_PASS "11223344"
-// #define EXAMPLE_ESP_WIFI_SSID "ChinaNet-BVBi"
-// #define EXAMPLE_ESP_WIFI_PASS "e6s7tmuq"
+// #define EXAMPLE_ESP_WIFI_SSID "pppppp"
+// #define EXAMPLE_ESP_WIFI_PASS "11223344"
+#define EXAMPLE_ESP_WIFI_SSID "ChinaNet-BVBi"
+#define EXAMPLE_ESP_WIFI_PASS "e6s7tmuq"
 
-#define RMT_TX_NUM 8				 //发送口
+#define RMT_TX_NUM 0				 //发送口
 #define RMT_TX_CHANNEL RMT_CHANNEL_0 //发送频道
 #define LED_STRIP_NUM 257			 //灯珠数量
 
@@ -32,11 +38,16 @@ int awtrix_status_flag = 0;
 
 TaskHandle_t awtrix_display_handle = NULL;
 TaskHandle_t awtrix_status_handle = NULL;
+TaskHandle_t awtrix_weather_handle = NULL;
+TaskHandle_t awtrix_ferquency_handle = NULL;
 
 time_t now;
 struct tm timeinfo;
 
 static pixel_u pixel[AWTRIX_MAX_RAW][AWTRIX_MAX_COL];
+static weather_t weather;
+
+awtrix_t awtrix;
 
 void init_led()
 {
@@ -66,7 +77,7 @@ void set_rgb(int led_num, uint16_t Red, uint16_t Green, uint16_t Blue)
 	strip->refresh(strip, LED_STRIP_NUM);
 }
 
-void awtrix_display(void *pvParameters) //任务函数
+void awtrix_display_task(void *pvParameters) //任务函数
 {
 	while (1)
 	{
@@ -75,24 +86,6 @@ void awtrix_display(void *pvParameters) //任务函数
 
 		uint8_t flag = 0;
 		int num = 0;
-
-		printf("\n");
-
-		for (int i = 0; i < 8; i++)
-		{
-			for (int j = 0; j < 32; j++)
-			{
-				if (pixel[i][j].rgb > 0)
-				{
-					printf("* ");
-				}
-				else
-				{
-					printf("  ");
-				}
-			}
-			printf("\n");
-		}
 
 		for (int i = 0; i < 32; i++)
 		{
@@ -111,9 +104,9 @@ void awtrix_display(void *pvParameters) //任务函数
 				}
 				else
 				{
-					if (pixel[i][AWTRIX_MAX_RAW-j-1].rgb > 0)
+					if (pixel[AWTRIX_MAX_RAW - j - 1][i].rgb > 0)
 					{
-						strip->set_pixel(strip, num, pixel[i][AWTRIX_MAX_RAW-j-1].r, pixel[i][AWTRIX_MAX_RAW-j-1].g, pixel[i][AWTRIX_MAX_RAW-j-1].b);
+						strip->set_pixel(strip, num, pixel[AWTRIX_MAX_RAW - j - 1][i].r, pixel[AWTRIX_MAX_RAW - j - 1][i].g, pixel[AWTRIX_MAX_RAW - j - 1][i].b);
 					}
 					else
 					{
@@ -125,29 +118,37 @@ void awtrix_display(void *pvParameters) //任务函数
 			flag = ~flag;
 		}
 		strip->refresh(strip, num);
-		vTaskDelay(pdMS_TO_TICKS(1000));
+		vTaskDelay(pdMS_TO_TICKS(100));
 	}
 	vTaskDelete(awtrix_display_handle);
 	awtrix_display_handle = NULL;
 }
-void awtrix_status(void *pvParameters) //任务函数
+void awtrix_status_task(void *pvParameters) //任务函数
 {
 	while (1)
 	{
+		time(&now);
+		localtime_r(&now, &timeinfo);
+
 		switch (awtrix_status_flag)
 		{
 		case 0:
 			awtrix_effect_scroll((pixel_u *)&pixel);
-			vTaskDelay(pdMS_TO_TICKS(100));
+			vTaskDelay(pdMS_TO_TICKS(200));
 			break;
 		case 1:
-			time(&now);
-			localtime_r(&now, &timeinfo);
-			awtrix_map_set_clock((pixel_u *)&pixel, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+			awtrix_display_set_clock((pixel_u *)&pixel, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+			if ((timeinfo.tm_hour == 0) && (timeinfo.tm_min == 0) && (timeinfo.tm_sec == 0))
+			{
+				struct timeval time;
+				sntp_sync_time(&time);
+				settimeofday(&time, NULL);
+			}
 			vTaskDelay(pdMS_TO_TICKS(1000));
 			break;
 		case 2:
-			
+			awtrix_display_set_temp((pixel_u *)&pixel, &weather);
+			vTaskDelay(pdMS_TO_TICKS(1000));
 			break;
 		default:
 			break;
@@ -155,23 +156,59 @@ void awtrix_status(void *pvParameters) //任务函数
 	}
 }
 
+void awtrix_weather_task(void *pvParameters) //任务函数
+{
+	while (1)
+	{
+		awtrix_weather_get(&weather);
+		vTaskDelay(pdMS_TO_TICKS(10 * 60 * 1000));
+	}
+}
+void awtrix_ferquency_task(void *pvParameters) //任务函数
+{
+	int adc_raw[32];
+	double pr[32], pi[32], fr[32], fi[32], t[32];
+	adc_init();
+	while (1)
+	{
+		for (int i = 0; i < 32; i++)
+		{
+			adc_raw[i] = adc_get_raw();
+			pi[i] = 0;
+			t[i] = i*0.001;
+			pr[i] = (float)adc_raw[i] ;
+		}
+		kfft(pr, pi, 32, 6, fr, fi);
+		for (int i = 0; i < 32; i++)
+		{
+			printf("%d\t%lf\n", i, pr[i]); //输出结果
+		}
+
+		vTaskDelay(pdMS_TO_TICKS(10000));
+	}
+}
+
 int awtrix_init(void)
 {
 	init_led();
 
+	awtrix = awtrix_pixel_init((pixel_u *)&pixel);
+
 	awtrix_weather_init();
 
-	awtrix_pixel_init((pixel_u *)&pixel);
-
-	awtrix_map_wifi_init((pixel_u *)&pixel);
+	awtrix_display_set_wifi((pixel_u *)&pixel);
 
 	if (awtrix_display_handle == NULL)
 	{
-		xTaskCreate(awtrix_display, "awtrix_display", 4096, NULL, 5, NULL);
+		xTaskCreate(awtrix_display_task, "awtrix_display", 4096, NULL, 5, &awtrix_display_handle);
 	}
 	if (awtrix_status_handle == NULL)
 	{
-		xTaskCreate(awtrix_status, "awtrix_status", 4096, NULL, 5, NULL);
+		xTaskCreate(awtrix_status_task, "awtrix_status", 4096, NULL, 5, &awtrix_status_handle);
+	}
+	if (awtrix_ferquency_handle == NULL)
+	{
+		xTaskCreate(awtrix_ferquency_task, "awtrix_ferquency", 4096, NULL, 5, &awtrix_ferquency_handle);
 	}
 
 	time(&now);
@@ -201,13 +238,14 @@ int awtrix_init(void)
 	strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
 	ESP_LOGI(TAG, "The current date/time in Shanghai is: %s", strftime_buf);
 
-	awtrix_status_flag = 1;
+	if (awtrix_weather_handle == NULL)
+	{
+		xTaskCreate(awtrix_weather_task, "awtrix_weather", 4096, NULL, 5, &awtrix_weather_handle);
+	}
 
-	weather_t weather;
+	awtrix_status_flag = 2;
 
-	awtrix_weather_get(&weather);
-
-	awtrix_pixel_clear((pixel_u *)&pixel);
+	awtrix.clear((pixel_u *)&pixel);
 
 	return 0;
 }
