@@ -7,6 +7,7 @@ idf_component_register(SRCS "awtrix_clock.c"
                         INCLUDE_DIRS "./include"
                         PRIV_REQUIRES "driver"
                                   "drivers"
+                                  "my_hal"
                                 nvs_flash
                                 esp_http_client
                                 esp_http_server

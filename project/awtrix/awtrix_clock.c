@@ -1,13 +1,19 @@
 #include "awtrix.h"
 #include "awtrix_api.h"
 #include <string.h>
+#include <time.h>
 #include "fonts.h"
 
 static int awtrix_clock_num = 0;
 static uint8_t awtrix_clock_bar_effect = 0x01;
 
-int awtrix_display_set_clock(pixel_u *pixel, int hours, int minutes, int seconds)
+int awtrix_display_set_clock(pixel_u *pixel, struct tm timeinfo)
 {
+
+    uint8_t hours = timeinfo.tm_hour;
+    uint8_t minutes = timeinfo.tm_min;
+    uint8_t seconds = timeinfo.tm_sec;
+    
     int hours_high = 0;
     int hours_low = 0;
     int minutes_high = 0;
@@ -15,8 +21,6 @@ int awtrix_display_set_clock(pixel_u *pixel, int hours, int minutes, int seconds
     int seconds_high = 0;
     int seconds_low = 0;
 
-    if ((hours > 24) || (hours < 0) || (minutes > 60) || (minutes < 0) || (seconds > 60) || (seconds < 0))
-        return -1;
 
     if (AWTRIX_DISPLAY_CLOCK_HOURS_12 == 1)
         awtrix_clock_num++;

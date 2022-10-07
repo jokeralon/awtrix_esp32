@@ -5,4 +5,8 @@
 
 esp_err_t wifi_init_sta(const char *ssid, const char *passwd);
 
+int wifi_get_ip_flag();
+
+int wifi_wait_for_connect();
+
 #endif

@@ -1,6 +1,14 @@
 #include "awtrix.h"
 #include "awtrix_api.h"
 #include "shape.h"
+#include "ws2812.h"
+#include "driver/rmt.h"
+
+#define RMT_TX_NUM 2                 //发送口
+#define RMT_TX_CHANNEL RMT_CHANNEL_0 //发送频道
+#define LED_STRIP_NUM 257            //灯珠数量
+
+static led_strip_t *strip;
 
 // static uint8_t awtrix_point_map[AWTRIX_MAX_RAW][AWTRIX_MAX_COL] = {
 //     {0, 15, 16, 31, 32, 47, 48, 63, 64, 79, 80, 95, 96, 111, 112, 127, 128, 143, 144, 159, 160, 175, 176, 191, 192, 207, 208, 223, 224, 239, 240, 255},
@@ -40,29 +48,6 @@ int awtrix_pixel_get_cursor(int *x, int *y)
     return 0;
 }
 
-awtrix_t awtrix_pixel_init(pixel_u *pixel)
-{
-    fonts_ascii_5_3_init(ascii_font);
-    weather_shape_init(weather_shape);
-    icon_shape_init(icon_shape);
-
-    for (int i = 0; i < AWTRIX_MAX_RAW; i++)
-    {
-        for (int j = 0; j < AWTRIX_MAX_COL; j++)
-        {
-            pixel[i * AWTRIX_MAX_COL + j].rgb = 0;
-        }
-    }
-
-    awtrix_api.clear = &awtrix_pixel_clear;
-    awtrix_api.getCursor = &awtrix_pixel_get_cursor;
-    awtrix_api.setCursor = &awtrix_pixel_set_cursor;
-    awtrix_api.showChar = &awtrix_pixel_add_char;
-    awtrix_api.showString = &awtrix_pixel_add_string;
-
-    return awtrix_api;
-}
-
 int awtrix_pixel_add_weather(pixel_u *local_pixel, uint8_t index, uint8_t cover, uint8_t red, uint8_t green, uint8_t blue)
 {
 
@@ -71,11 +56,11 @@ int awtrix_pixel_add_weather(pixel_u *local_pixel, uint8_t index, uint8_t cover,
     for (int i = 0; i < AWTRIX_MAX_RAW; i++)
         pixel[i] = &local_pixel[i * AWTRIX_MAX_COL];
 
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < AWTRIX_MAX_RAW; i++)
     {
-        for (int j = 0; j < 8; j++)
+        for (int j = 0; j < AWTRIX_MAX_RAW; j++)
         {
-            if (weather_shape[index].shape[i * 8 + j] == 1)
+            if (weather_shape[index].shape[i * AWTRIX_MAX_RAW + j] == 1)
             {
                 pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].r = red;
                 pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].g = green;
@@ -94,7 +79,6 @@ int awtrix_pixel_add_weather(pixel_u *local_pixel, uint8_t index, uint8_t cover,
     return 0;
 }
 
-
 int awtrix_pixel_add_icon(pixel_u *local_pixel, uint8_t index, uint8_t cover, uint8_t red, uint8_t green, uint8_t blue)
 {
 
@@ -103,17 +87,17 @@ int awtrix_pixel_add_icon(pixel_u *local_pixel, uint8_t index, uint8_t cover, ui
     for (int i = 0; i < AWTRIX_MAX_RAW; i++)
         pixel[i] = &local_pixel[i * AWTRIX_MAX_COL];
 
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < AWTRIX_MAX_RAW; i++)
     {
-        for (int j = 0; j < 8; j++)
+        for (int j = 0; j < AWTRIX_MAX_RAW; j++)
         {
-            if (icon_shape[index].shape[i * 8 + j] == 1)
+            if (icon_shape[index].shape[i * AWTRIX_MAX_RAW + j] == 1)
             {
                 pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].r = red;
                 pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].g = green;
                 pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].b = blue;
             }
-            else if(icon_shape[index].shape[i * 8 + j] == 2)
+            else if (icon_shape[index].shape[i * AWTRIX_MAX_RAW + j] == 2)
             {
                 pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].r = green;
                 pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].g = blue;
@@ -188,4 +172,75 @@ int awtrix_pixel_clear(pixel_u *pixel)
         }
     }
     return 0;
+}
+
+int awtrix_pixel_send_data(pixel_u *pixel) //任务函数
+{
+
+    if (pixel == NULL)
+        return ESP_FAIL;
+
+    uint8_t flag = 0;
+    int num = 0;
+
+    for (int i = 0; i < AWTRIX_MAX_COL; i++)
+    {
+        for (int j = 0; j < AWTRIX_MAX_RAW; j++)
+        {
+            strip->set_pixel(strip, num, 0, 0, 0x10);
+            if (!flag)
+            {
+                if (pixel[(j * AWTRIX_MAX_COL) + i].rgb > 0)
+                {
+                    strip->set_pixel(strip, num, pixel[(j * AWTRIX_MAX_COL) + i].r, pixel[(j * AWTRIX_MAX_COL) + i].g, pixel[(j * AWTRIX_MAX_COL) + i].b);
+                }
+                else
+                {
+                    strip->set_pixel(strip, num, 0, 0, 0);
+                }
+            }
+            else
+            {
+                if (pixel[(AWTRIX_MAX_RAW - j - 1) * AWTRIX_MAX_COL + i].rgb > 0)
+                {
+                    strip->set_pixel(strip, num, pixel[(AWTRIX_MAX_RAW - j - 1) * AWTRIX_MAX_COL + i].r, pixel[(AWTRIX_MAX_RAW - j - 1) * AWTRIX_MAX_COL + i].g, pixel[(AWTRIX_MAX_RAW - j - 1) * AWTRIX_MAX_COL + i].b);
+                }
+                else
+                {
+                    strip->set_pixel(strip, num, 0, 0, 0);
+                }
+            }
+            num++;
+        }
+        flag = ~flag;
+    }
+    
+
+        strip->refresh(strip, 10);
+
+    return ESP_OK;
+}
+
+awtrix_t awtrix_pixel_init(pixel_u *pixel)
+{
+    strip = led_strip_init(RMT_TX_CHANNEL, RMT_TX_NUM, LED_STRIP_NUM);
+    fonts_ascii_5_3_init(ascii_font);
+    weather_shape_init(weather_shape);
+    icon_shape_init(icon_shape);
+
+    for (int i = 0; i < AWTRIX_MAX_RAW; i++)
+    {
+        for (int j = 0; j < AWTRIX_MAX_COL; j++)
+        {
+            pixel[i * AWTRIX_MAX_COL + j].rgb = 0;
+        }
+    }
+
+    awtrix_api.clear = &awtrix_pixel_clear;
+    awtrix_api.getCursor = &awtrix_pixel_get_cursor;
+    awtrix_api.setCursor = &awtrix_pixel_set_cursor;
+    awtrix_api.showChar = &awtrix_pixel_add_char;
+    awtrix_api.showString = &awtrix_pixel_add_string;
+
+    return awtrix_api;
 }

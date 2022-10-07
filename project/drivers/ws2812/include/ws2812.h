@@ -143,6 +143,9 @@ led_strip_t * led_strip_init(uint8_t channel, uint8_t gpio, uint16_t led_num);
  */
 esp_err_t led_strip_denit(led_strip_t *strip);
 
+
+led_strip_t * led_strip_init(uint8_t channel, uint8_t gpio, uint16_t led_num);
+
 #ifdef __cplusplus
 }
 #endif

@@ -19,6 +19,8 @@ typedef struct
     _getCursor getCursor;
 }awtrix_t;
 
+
+
 awtrix_t awtrix_pixel_init(pixel_u *pixel);
 
 int awtrix_pixel_set_cursor(int x, int y);
@@ -35,5 +37,6 @@ int awtrix_pixel_add_string(pixel_u *pixel,  char *str, uint8_t cover, uint8_t r
 
 int awtrix_pixel_clear(pixel_u *pixel);
 
+int awtrix_pixel_send_data(pixel_u *pixel);
 
 #endif

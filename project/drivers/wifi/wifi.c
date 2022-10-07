@@ -43,21 +43,21 @@ static EventGroupHandle_t s_wifi_event_group;
 static const char *TAG = "wifi station";
 
 static int s_retry_num = 0;
-
+static int wifi_got_ip_flag = 0;
 
 void time_sync_notification_cb(struct timeval *tv)
 {
-    ESP_LOGI(TAG, "Notification of a time synchronization event");
+    // ESP_LOGI(TAG, "Notification of a time synchronization event");
 }
 
 static void initialize_sntp(void)
 {
     ESP_LOGI(TAG, "Initializing SNTP");
     sntp_setoperatingmode(SNTP_OPMODE_POLL);
-    sntp_setservername(1, "ntp1.aliyun.com");
-    sntp_setservername(2, "cn.pool.ntp.org"); // 中国区NTP服务的虚拟集群
-    sntp_setservername(1, "210.72.145.44"); // 国家授时中心服务器 IP 地址
-    sntp_setservername(3, "1.cn.pool.ntp.org");
+    sntp_setservername(0, "ntp.aliyun.com");
+    sntp_setservername(1, "cn.pool.ntp.org"); // 中国区NTP服务的虚拟集群
+    sntp_setservername(2, "210.72.145.44");   // 国家授时中心服务器 IP 地址
+    sntp_setservername(3, "ntp5.aliyun.com");
     sntp_set_time_sync_notification_cb(time_sync_notification_cb);
 #ifdef CONFIG_SNTP_TIME_SYNC_METHOD_SMOOTH
     sntp_set_sync_mode(SNTP_SYNC_MODE_SMOOTH);
@@ -91,6 +91,7 @@ static void event_handler(void *arg, esp_event_base_t event_base,
         ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
         ESP_LOGI(TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
         s_retry_num = 0;
+        wifi_got_ip_flag = 1;
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
 
         initialize_sntp();
@@ -99,7 +100,7 @@ static void event_handler(void *arg, esp_event_base_t event_base,
         time_t now = 0;
         struct tm timeinfo = {0};
         int retry = 0;
-        const int retry_count = 1;
+        const int retry_count = 8;
         while (sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET && ++retry < retry_count)
         {
             ESP_LOGI(TAG, "Waiting for system time to be set... (%d/%d)", retry, retry_count);
@@ -187,4 +188,19 @@ esp_err_t wifi_init_sta(const char *ssid, const char *passwd)
     ESP_ERROR_CHECK(esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, instance_any_id));
     vEventGroupDelete(s_wifi_event_group);
     return ret;
+}
+
+int wifi_get_ip_flag()
+{
+    return wifi_got_ip_flag;
+}
+
+int wifi_wait_for_connect()
+{
+    if (s_wifi_event_group != NULL)
+        xEventGroupWaitBits(s_wifi_event_group, WIFI_CONNECTED_BIT, pdTRUE, pdFALSE, pdMS_TO_TICKS(10 * 1000));
+    if (wifi_got_ip_flag == 1)
+        return ESP_OK;
+    else
+        return ESP_FAIL;
 }
