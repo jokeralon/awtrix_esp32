@@ -283,7 +283,7 @@ extern int awtrix_pixel_add_weather(pixel_u *local_pixel, uint8_t index, uint8_t
 extern int awtrix_pixel_add_icon(pixel_u *local_pixel, uint8_t index, uint8_t cover, uint8_t red, uint8_t green, uint8_t blue);
 extern int awtrix_pixel_add_char(pixel_u *local_pixel, uint8_t ch, uint8_t cover, uint8_t red, uint8_t green, uint8_t blue);
 
-int awtrix_display_set_temp(pixel_u *pixel, weather_t *weather)
+int awtrix_display_set_weather(pixel_u *pixel, weather_t *weather)
 {
     if (weather == NULL)
         return -1;

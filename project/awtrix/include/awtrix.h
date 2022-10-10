@@ -21,7 +21,9 @@ extern "C"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "esp_err.h"
+#include "sht30.h"
 
 #define NUMBER_FONT_START_X (2) // 字体偏移，左上角为原点
 #define NUMBER_FONT_START_Y (1)
@@ -130,7 +132,7 @@ extern "C"
         uint8_t tm_wday;  /* Day of week.	[0-6] */
         uint8_t tm_yday;  /* Days in year.[0-365]	*/
         uint8_t tm_isdst; /* DST.		[-1/0/1]*/
-    } clock_t;
+    } awtrix_clock_t;
 
     void init_led();
 
@@ -140,6 +142,8 @@ extern "C"
 
     int awtrix_display_set_clock(pixel_u *pixel, struct tm timeinfo);
 
+    int awtrix_display_set_clock_2(pixel_u *pixel, struct tm timeinfo);
+
     int awtrix_effect_scroll(pixel_u *pixel);
 
     int awtrix_display_set_wifi(pixel_u *pixel);
@@ -148,7 +152,10 @@ extern "C"
 
     int awtrix_weather_get(weather_t *weather);
 
-    int awtrix_display_set_temp(pixel_u *pixel, weather_t *weather);
+    int awtrix_display_set_weather(pixel_u *pixel, weather_t *weather);
+
+    int awtrix_display_set_temp(pixel_u *pixel, sht30_value_t *sht30_temp);
+    
 
 #ifdef __cplusplus
 }
