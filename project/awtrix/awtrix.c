@@ -1,6 +1,8 @@
 #include "awtrix.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+
 #include "driver/rmt.h"
 #include "esp_system.h"
 #include "esp_log.h"
@@ -13,9 +15,10 @@
 
 #include "awtrix_api.h"
 #include "awtrix_weather.h"
+#include "awtrix_music.h"
 #include "ws2812.h"
+#include "arduinoFFT.h"
 #include <sntp.h>
-#include "fft.h"
 #include "adc.h"
 #include "sht30.h"
 #include "dev_time.h"
@@ -158,6 +161,12 @@ int awtrix_init(void)
 
 	awtrix_display_set_wifi((pixel_u *)&pixel);
 
+	awtrix_i2s_init();
+
+	if (awtrix_display_handle == NULL)
+	{
+		xTaskCreate(awtrix_display_task, "awtrix_display", 4096, NULL, 5, &awtrix_display_handle);
+	}
 	if (awtrix_display_handle == NULL)
 	{
 		xTaskCreate(awtrix_display_task, "awtrix_display", 4096, NULL, 5, &awtrix_display_handle);
