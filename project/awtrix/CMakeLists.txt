@@ -2,7 +2,7 @@ idf_component_register(SRCS "awtrix_clock.c"
                             "awtrix_effect.c"
                             "awtrix_api.c"
                             "awtrix_weather.c"
-                            "fft.c"
+                            "awtrix_music.c"
                             "awtrix.c"
                             
                         INCLUDE_DIRS "./include"

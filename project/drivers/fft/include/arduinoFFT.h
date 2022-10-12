@@ -80,4 +80,6 @@
 
 	void fft_swap(double *x, double *y);
 
+	double fft_add(int from, int to, double *fft_value);
+
 #endif

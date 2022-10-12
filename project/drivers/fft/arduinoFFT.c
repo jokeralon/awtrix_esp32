@@ -174,3 +174,14 @@ void fft_swap(double *x, double *y)
 	*x = *y;
 	*y = temp;
 }
+
+double fft_add(int from, int to, double *fft_value)
+{
+	int i = from;
+	double result = 0;
+	while (i <= to)
+	{
+		result += fft_value[i++];
+	}
+	return result;
+}
