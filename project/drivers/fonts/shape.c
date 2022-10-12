@@ -13,6 +13,7 @@
     {0,0,0,0,0,0,0,0},
 */
 
+
 /*
         * * * * 
       *   *     * 
@@ -172,7 +173,7 @@ int weather_shape_init(weather_shape_t *shape)
   return 0;
 }
 
-int icon_shape_init(icon_shape_t *shape)
+int shape_8x8_init(icon_shape_t *shape)
 {
   shape[0].shape = (uint8_t *)&shape_clock;
   shape[1].shape = (uint8_t *)&shape_wifi;

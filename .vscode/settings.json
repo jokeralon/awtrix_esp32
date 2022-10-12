@@ -19,6 +19,11 @@
         "sys.h": "c",
         "esp_system.h": "c",
         "esp_http_client.h": "c",
-        "esp_adc_cal.h": "c"
+        "esp_adc_cal.h": "c",
+        "i2c.h": "c",
+        "task.h": "c",
+        "sht30.h": "c",
+        "hal_i2c.h": "c",
+        "string.h": "c"
     }
 }

@@ -1,7 +1,3 @@
-#include "ws2812.h"
-
-
-
 // Copyright 2019 Espressif Systems (Shanghai) PTE LTD
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -176,9 +172,18 @@ err:
     return ret;
 }
 
+
+esp_err_t led_strip_denit(led_strip_t *strip)
+{
+    ws2812_t *ws2812 = __containerof(strip, ws2812_t, parent);
+    ESP_ERROR_CHECK(rmt_driver_uninstall(ws2812->rmt_channel));
+    return strip->del(strip);
+}
+
+
 led_strip_t * led_strip_init(uint8_t channel, uint8_t gpio, uint16_t led_num)
 {
-    static led_strip_t *pStrip;
+	    static led_strip_t *pStrip;
 
     rmt_config_t config = RMT_DEFAULT_CONFIG_TX(gpio, channel);
     // set counter clock to 40MHz
@@ -203,9 +208,3 @@ led_strip_t * led_strip_init(uint8_t channel, uint8_t gpio, uint16_t led_num)
     return pStrip;
 }
 
-esp_err_t led_strip_denit(led_strip_t *strip)
-{
-    ws2812_t *ws2812 = __containerof(strip, ws2812_t, parent);
-    ESP_ERROR_CHECK(rmt_driver_uninstall(ws2812->rmt_channel));
-    return strip->del(strip);
-}
