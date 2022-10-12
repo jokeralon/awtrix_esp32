@@ -17,7 +17,6 @@
 #include "driver/adc.h"
 #include "driver/i2s.h"
 #include "esp_adc_cal.h"
-#include "esp_dsp.h"
 
 #include "awtrix_api.h"
 #include "awtrix_weather.h"
@@ -216,14 +215,8 @@ void awtrix_i2s_init()
 #define xres 32 // Total number of  columns in the display
 #define yres 8	// Total number of  rows in the display
 
-int Displacement = 1; // Create LED Object
-
-int N = N_SAMPLES;
 int32_t sample[N_SAMPLES];
-float y_cf[N_SAMPLES];
-float sum_y[N_SAMPLES];
 int16_t freq_offset[16] = {0, 1, 2, 3, 4, 5, 8, 11, 17, 25, 30, 41, 44, 87, 175, 711};
-float tempraw[18];
 
 double vReal[N_SAMPLES]; // 实部 FFT采样输入样本数组
 double vImag[N_SAMPLES]; // 虚部 FFT运算输出数组
@@ -233,10 +226,9 @@ int fft_result[32];
 uint8_t sens = 16;
 int freq_gain2[xres] = {30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30};
 double fft_freq_boost[32] = {1.02,1.03,1.04,1.06,1.08,1.10,1.10,1.11,1.12,1.13,1.15,1.16,1.17,1.18,1.20,1.21,1.30,1.51,2.11,2.22,3.25,3.26,3.52,3.55,4.22,4.24,5.52,5.55,6.53,6.55,8.82,8.88};
-int gain = 30;			  // adjust it to set the gain
+int gain = 45;			  // adjust it to set the gain
 int Intensity[xres] = {}; // initialize Frequency Intensity to zero
 unsigned long lastTime = 0;
-int fft_value_old[32];
 
 uint8_t bar_height[]  = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 uint8_t peak_height[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
@@ -251,6 +243,61 @@ double fft_add(int from, int to)
 		result += fft_bin[i++];
 	}
 	return result;
+}
+
+
+
+uint32_t hsv2rgb(uint16_t hue, uint8_t saturation, uint8_t value)
+{
+    uint8_t red = 0;
+    uint8_t green = 0;
+    uint8_t blue = 0;
+    uint16_t hi = (hue / 60) % 6;
+    uint16_t F = 100 * hue / 60 - 100 * hi;
+    uint16_t P = value * (100 - saturation) / 100;
+    uint16_t Q = value * (10000 - F * saturation) / 10000;
+    uint16_t T = value * (10000 - saturation * (100 - F)) / 10000;
+
+    switch (hi)
+    {
+    case 0:
+        red = value;
+        green = T;
+        blue = P;
+        break;
+    case 1:
+        red = Q;
+        green = value;
+        blue = P;
+        break;
+    case 2:
+        red = P;
+        green = value;
+        blue = T;
+        break;
+    case 3:
+        red = P;
+        green = Q;
+        blue = value;
+        break;
+    case 4:
+        red = T;
+        green = P;
+        blue = value;
+        break;
+    case 5:
+        red = value;
+        green = P;
+        blue = Q;
+        break;
+    default:
+        return 0;
+    }
+    red = red * 255 / 100;
+    green = green * 255 / 100;
+    blue = blue * 255 / 100;
+
+    return (((uint32_t)blue<<16)|(uint32_t)(green<<8)|(uint32_t)(red));
 }
 
 int awtrix_init(void)
@@ -382,15 +429,18 @@ int awtrix_init(void)
 			// 	if (vReal[i] > Intensity[(i - t) / Displacement]) // Match displayed value to measured value
 			// 		Intensity[(i - t) / Displacement] = vReal[i];
 			// }
+
+			int color = 0;
 			for (int i = 0; i < 32; i++)
 			{
 				for (int j = 0; j < 8; j++)
 				{
 					if ((j <= bar_height[i]))
-						pixel[7 - j][i].g = 0x10;
+						pixel[7 - j][i].rgb = hsv2rgb(color, 100, 10);
 					else
 						pixel[7 - j][i].rgb = 0;
 				}
+				color += 360/32;
 			}
 			// printf("%d ", fft_result[i]);
 			// printf("\r\n");

@@ -2,6 +2,7 @@ idf_component_register(SRCS "awtrix_clock.c"
                             "awtrix_effect.c"
                             "awtrix_api.c"
                             "awtrix_weather.c"
+                            "fft.c"
                             "awtrix.c"
                             
                         INCLUDE_DIRS "./include"
@@ -14,5 +15,4 @@ idf_component_register(SRCS "awtrix_clock.c"
                                 esp-tls
                                 json
                                 esp_adc_cal
-                                esp-dsp
                     )
