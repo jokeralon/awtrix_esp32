@@ -30,7 +30,7 @@ static const char *TAG = "awtrix";
 #define EXAMPLE_ESP_WIFI_SSID "ChinaNet-BVBi"
 #define EXAMPLE_ESP_WIFI_PASS "e6s7tmuq"
 
-#define SWTICH_KEY_PIN	(9)
+#define SWTICH_KEY_PIN (9)
 
 int awtrix_status_flag = 0;
 
@@ -78,6 +78,9 @@ void awtrix_status_task(void *pvParameters) //任务函数
 		case 3:
 			awtrix_display_set_temp((pixel_u *)&pixel, &sht30);
 			vTaskDelay(pdMS_TO_TICKS(1000));
+			break;
+		case 4:
+			awtrix_music((pixel_u *)&pixel);
 			break;
 		default:
 			break;
@@ -136,15 +139,16 @@ void awtrix_switch_task(void *pvParameters) //任务函数
 			{
 				ESP_LOGI(TAG, "key down");
 				awtrix_status_flag++;
-				if( awtrix_status_flag > 3)
+				if (awtrix_status_flag > 4)
 				{
-					awtrix_status_flag = 0;
+					awtrix_status_flag = 1;
 				}
 			}
 			while (gpio_get_level(SWTICH_KEY_PIN) == 0)
 			{
 				vTaskDelay(pdMS_TO_TICKS(10));
 			}
+			awtrix_pixel_clear((pixel_u *)&pixel);
 		}
 
 		vTaskDelay(pdMS_TO_TICKS(10));
@@ -161,12 +165,6 @@ int awtrix_init(void)
 
 	awtrix_display_set_wifi((pixel_u *)&pixel);
 
-	awtrix_i2s_init();
-
-	if (awtrix_display_handle == NULL)
-	{
-		xTaskCreate(awtrix_display_task, "awtrix_display", 4096, NULL, 5, &awtrix_display_handle);
-	}
 	if (awtrix_display_handle == NULL)
 	{
 		xTaskCreate(awtrix_display_task, "awtrix_display", 4096, NULL, 5, &awtrix_display_handle);
@@ -186,6 +184,7 @@ int awtrix_init(void)
 	wifi_init_sta(EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
 
 	dev_time_init();
+	awtrix_i2s_init();
 	awtrix_weather_init();
 	awtrix_weather_get(&weather);
 
