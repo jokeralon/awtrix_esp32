@@ -8,6 +8,7 @@
 #define RMT_TX_CHANNEL RMT_CHANNEL_0 //发送频道
 #define LED_STRIP_NUM 257            //灯珠数量
 
+
 static led_strip_t *strip;
 
 // static uint8_t awtrix_point_map[AWTRIX_MAX_RAW][AWTRIX_MAX_COL] = {
@@ -26,7 +27,8 @@ static int awtrix_pixel_cursor_y = 0;
 
 ascii_5_3_font_t ascii_font[FONTS_ASCII_5_3_NUMBER];
 weather_shape_t weather_shape[8];
-icon_shape_t icon_shape[8];
+icon_shape_t icon_8x8_shape[8];
+icon_shape_t icon_5x6_shape[1];
 awtrix_t awtrix_api;
 
 int awtrix_pixel_set_cursor(int x, int y)
@@ -56,11 +58,11 @@ int awtrix_pixel_add_weather(pixel_u *local_pixel, uint8_t index, uint8_t cover,
     for (int i = 0; i < AWTRIX_MAX_RAW; i++)
         pixel[i] = &local_pixel[i * AWTRIX_MAX_COL];
 
-    for (int i = 0; i < AWTRIX_MAX_RAW; i++)
+    for (int i = 0; i < SHAPE_8x8_RAW; i++)
     {
-        for (int j = 0; j < AWTRIX_MAX_RAW; j++)
+        for (int j = 0; j < SHAPE_8x8_COL; j++)
         {
-            if (weather_shape[index].shape[i * AWTRIX_MAX_RAW + j] == 1)
+            if (weather_shape[index].shape[i * SHAPE_8x8_COL + j] == 1)
             {
                 pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].r = red;
                 pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].g = green;
@@ -77,7 +79,7 @@ int awtrix_pixel_add_weather(pixel_u *local_pixel, uint8_t index, uint8_t cover,
     }
     awtrix_pixel_cursor_x += 4;
     return 0;
-}
+} 
 
 int awtrix_pixel_add_icon(pixel_u *local_pixel, uint8_t index, uint8_t cover, uint8_t red, uint8_t green, uint8_t blue)
 {
@@ -87,21 +89,58 @@ int awtrix_pixel_add_icon(pixel_u *local_pixel, uint8_t index, uint8_t cover, ui
     for (int i = 0; i < AWTRIX_MAX_RAW; i++)
         pixel[i] = &local_pixel[i * AWTRIX_MAX_COL];
 
-    for (int i = 0; i < AWTRIX_MAX_RAW; i++)
+    for (int i = 0; i < SHAPE_8x8_RAW; i++)
     {
-        for (int j = 0; j < AWTRIX_MAX_RAW; j++)
+        for (int j = 0; j < SHAPE_8x8_COL; j++)
         {
-            if (icon_shape[index].shape[i * AWTRIX_MAX_RAW + j] == 1)
+            if (icon_8x8_shape[index].shape[i * SHAPE_8x8_COL + j] == 1)
             {
-                pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].r = red;
-                pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].g = green;
-                pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].b = blue;
+                pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].rgb = SHAPE_8x8_COLOR_1;
             }
-            else if (icon_shape[index].shape[i * AWTRIX_MAX_RAW + j] == 2)
+            else if (icon_8x8_shape[index].shape[i * SHAPE_8x8_COL + j] == 2)
             {
-                pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].r = green;
-                pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].g = blue;
-                pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].b = red;
+                pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].rgb = SHAPE_8x8_COLOR_2;
+            }
+            else if (icon_8x8_shape[index].shape[i * SHAPE_8x8_COL + j] == 3)
+            {
+                pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].rgb = SHAPE_8x8_COLOR_3;
+            }
+            else
+            {
+                if (cover == 1)
+                {
+                    pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].rgb = 0;
+                }
+            }
+        }
+    }
+    awtrix_pixel_cursor_x += 4;
+    return 0;
+}
+
+int awtrix_pixel_add_5x6_icon(pixel_u *local_pixel, uint8_t index, uint8_t cover)
+{
+
+    pixel_u *pixel[AWTRIX_MAX_RAW];
+
+    for (int i = 0; i < AWTRIX_MAX_RAW; i++)
+        pixel[i] = &local_pixel[i * AWTRIX_MAX_COL];
+
+    for (int i = 0; i < SHAPE_5x6_RAW; i++)
+    {
+        for (int j = 0; j < SHAPE_5x6_COL; j++)
+        {
+            if (icon_5x6_shape[index].shape[i * SHAPE_5x6_COL + j] == 1)
+            {
+                pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].rgb = SHAPE_5x6_COLOR_1;
+            }
+            else if (icon_5x6_shape[index].shape[i * SHAPE_5x6_COL + j] == 2)
+            {
+                pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].rgb = SHAPE_5x6_COLOR_2;
+            }
+            else if (icon_5x6_shape[index].shape[i * SHAPE_5x6_COL + j] == 3)
+            {
+                pixel[i + awtrix_pixel_cursor_y][j + awtrix_pixel_cursor_x].rgb = SHAPE_5x6_COLOR_3;
             }
             else
             {
@@ -147,6 +186,20 @@ int awtrix_pixel_add_char(pixel_u *local_pixel, uint8_t ch, uint8_t cover, uint8
         }
     }
     awtrix_pixel_cursor_x += 4;
+    return 0;
+}
+
+int awtrix_pixel_add_point(pixel_u *local_pixel, uint8_t cover, uint8_t red, uint8_t green, uint8_t blue)
+{
+    pixel_u *pixel[AWTRIX_MAX_RAW];
+
+    for (int i = 0; i < AWTRIX_MAX_RAW; i++)
+        pixel[i] = &local_pixel[i * AWTRIX_MAX_COL];
+
+    pixel[awtrix_pixel_cursor_y][awtrix_pixel_cursor_x].r = red;
+    pixel[awtrix_pixel_cursor_y][awtrix_pixel_cursor_x].g = green;
+    pixel[awtrix_pixel_cursor_y][awtrix_pixel_cursor_x].b = blue;
+
     return 0;
 }
 
@@ -214,9 +267,8 @@ int awtrix_pixel_send_data(pixel_u *pixel) //任务函数
         }
         flag = ~flag;
     }
-    
 
-        strip->refresh(strip, 10);
+    strip->refresh(strip, 10);
 
     return ESP_OK;
 }
@@ -226,7 +278,8 @@ awtrix_t awtrix_pixel_init(pixel_u *pixel)
     strip = led_strip_init(RMT_TX_CHANNEL, RMT_TX_NUM, LED_STRIP_NUM);
     fonts_ascii_5_3_init(ascii_font);
     weather_shape_init(weather_shape);
-    icon_shape_init(icon_shape);
+    shape_8x8_init(icon_8x8_shape);
+    shape_5x6_init(icon_5x6_shape);
 
     for (int i = 0; i < AWTRIX_MAX_RAW; i++)
     {

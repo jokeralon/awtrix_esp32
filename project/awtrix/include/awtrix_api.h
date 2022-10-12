@@ -27,9 +27,13 @@ int awtrix_pixel_set_cursor(int x, int y);
 
 int awtrix_pixel_get_cursor(int *x, int *y);
 
+int awtrix_pixel_add_point(pixel_u *local_pixel, uint8_t cover, uint8_t red, uint8_t green, uint8_t blue);
+
 int awtrix_pixel_add_weather(pixel_u *local_pixel, uint8_t index, uint8_t cover, uint8_t red, uint8_t green, uint8_t blue);
 
 int awtrix_pixel_add_icon(pixel_u *local_pixel, uint8_t index, uint8_t cover, uint8_t red, uint8_t green, uint8_t blue);
+
+int awtrix_pixel_add_5x6_icon(pixel_u *local_pixel, uint8_t index, uint8_t cover);
 
 int awtrix_pixel_add_char(pixel_u *local_pixel,  uint8_t ch, uint8_t cover, uint8_t red, uint8_t green, uint8_t blue);
 

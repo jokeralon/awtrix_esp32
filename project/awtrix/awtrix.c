@@ -40,6 +40,7 @@ static pixel_u pixel[AWTRIX_MAX_RAW][AWTRIX_MAX_COL];
 static struct tm timeinfo;
 static weather_t weather;
 static sht30_value_t sht30;
+static awtrix_clock_t local_time;
 
 awtrix_t awtrix;
 
@@ -68,7 +69,11 @@ void awtrix_status_task(void *pvParameters) //任务函数
 			vTaskDelay(pdMS_TO_TICKS(1000));
 			break;
 		case 2:
-			awtrix_display_set_temp((pixel_u *)&pixel, &weather);
+			awtrix_display_set_clock_2((pixel_u *)&pixel, timeinfo);
+			vTaskDelay(pdMS_TO_TICKS(1000));
+			break;
+		case 3:
+			awtrix_display_set_temp((pixel_u *)&pixel, &sht30);
 			vTaskDelay(pdMS_TO_TICKS(1000));
 			break;
 		default:
@@ -127,10 +132,11 @@ void awtrix_switch_task(void *pvParameters) //任务函数
 			if (gpio_get_level(SWTICH_KEY_PIN) == 0)
 			{
 				ESP_LOGI(TAG, "key down");
-				if (awtrix_status_flag == 1)
-					awtrix_status_flag = 2;
-				else
-					awtrix_status_flag = 1;
+				awtrix_status_flag++;
+				if( awtrix_status_flag > 3)
+				{
+					awtrix_status_flag = 0;
+				}
 			}
 			while (gpio_get_level(SWTICH_KEY_PIN) == 0)
 			{
