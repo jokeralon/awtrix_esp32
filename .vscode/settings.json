@@ -24,6 +24,8 @@
         "task.h": "c",
         "sht30.h": "c",
         "hal_i2c.h": "c",
-        "string.h": "c"
-    }
+        "string.h": "c",
+        "esp_log.h": "c"
+    },
+    "cmake.sourceDirectory": "${workspaceFolder}/esp-idf/components/bt"
 }
